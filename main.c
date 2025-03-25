@@ -7,13 +7,14 @@
  * Linijki 2-5 potrzebne do grafu
  */
 
+//calloc node->arraysize 0
+//realloc 1
 
 typedef struct node {
-    int nodeID; // index of a node
-    int arraySize;
-    int divSize; // divSize = arraySize/2
+    int arraySize; // Number of elements in allEdges array
     int *allEdges; // all connections with a node
     int group;
+    int divSize; // divSize = arraySize/2
     int *internalEdges; // all internal connections with a node
     int *externalEdges; // all external connections with a node
     int difference; // difference = numExternal - numInternal
@@ -21,6 +22,7 @@ typedef struct node {
 
 
 typedef struct graph {
+    int nodeID; // index of a node
     node currentNode;
     int numNodes; // number of nodes
     struct graph *next; // next node
@@ -28,18 +30,17 @@ typedef struct graph {
 
 
 /*Allocating memory for arrays, assigning nodeID and arraySize*/
-node createNode(int nodeID, int arraySize) {
+node createNode(int arraySize) {
     node newNode = malloc(sizeof(node));
     if(!newNode) {
         perror("Memory allocation failed!");
         exit(2137);
     }
-    newNode->nodeID = nodeID;
     newNode->arraySize = arraySize;
-    newNode->divSize = arraySize/2;
+    /*newNode->divSize = arraySize/2;  divSize trzeba będzie zmodyfikowac*/
     newNode->allEdges = malloc(sizeof(int) * newNode->arraySize);
-    newNode->internalEdges = malloc(sizeof(int) * newNode->divSize);
-    newNode->externalEdges = malloc(sizeof(int) * newNode->divSize);
+    //newNode->internalEdges = malloc(sizeof(int) * newNode->divSize);
+    //newNode->externalEdges = malloc(sizeof(int) * newNode->divSize);
     return newNode;
 }
 
@@ -87,6 +88,7 @@ int *readLine(const char *fileName, int lineNumber, int n) {
     return array;
 }
 
+
 int findLastNode(const char *fileName) {
     const int n4 = numElements(fileName, 4);
     const int n5 = numElements(fileName, 5);
@@ -103,6 +105,7 @@ int findLastNode(const char *fileName) {
     return lastNode;
 }
 
+/*Creating a graph*/
 graph createGraph(const char *fileName) {
     graph first = NULL;
     graph temp = NULL;
@@ -117,6 +120,7 @@ graph createGraph(const char *fileName) {
         }
         temp->next = NULL;
         temp->numNodes = lastNode;
+        temp->currentNode->arraySize = 0; /* setting all arraySize to 0 */
         if (i == 0) {
             first = temp;
         }
@@ -131,18 +135,59 @@ graph createGraph(const char *fileName) {
     return first;
 }
 
-/*Creating a graph*/
+
+/*Finding specific from linkedList node based on nodeID*/
+graph findNodeID(graph Miautoni, int nodeID) {
+    graph Graph = Miautoni;
+    while(Graph != NULL) {
+        if(Graph->nodeID == nodeID) {
+            return Graph;
+        }
+        Graph = Graph->next;
+    }
+
+    return NULL;
+};
+
+
+/*adding all edges to graph and assigning values*/
 graph addEdges(const char *fileName) {
+    graph Graph = createGraph(fileName);
     const int lastNode = findLastNode(fileName);
     const int arraySize = 10; // nwm jaka tu powinna byc wartosc ---
     const int n4 = numElements(fileName, 4);
     const int n5 = numElements(fileName, 5);
     int *line4 = readLine(fileName, 4, n4);
     int *line5 = readLine(fileName, 5, n5);
+    int allEdgesArraySize;
+    graph Graph1 = Graph;
 
-    graph Graph = createGraph(fileName);
 
-    /*Tu trzeba kontynuwoac */
+    for(int i = 0; i < n5; i++) {
+        if(n5 != i++) {
+            Graph1->nodeID = line4[line5[i]];
+            allEdgesArraySize = line5[i++] - line5[i] - 1;
+            for(int j = 0; j < allEdgesArraySize; j++) {
+                Graph1->nodeID = line4[line5[i]];
+                if(Graph1->currentNode->arraySize == 0 && j == 0) /*PRIMARY NODE NIE BYLO WCZESNIEJ*/{
+                    //Stworzyc wezel
+                    //Umiescicic go w strcu graph
+                    node newNode = createNode(allEdgesArraySize);
+                    Graph1->currentNode = newNode;
+                    Graph1->currentNode->allEdges[] = line4[line5[i]+1+j]; //allEdges[ ]
+                }else if (Graph1->currentNode->arraySize == 0 && j != 0) /*FOREIGN NODE NIE BYLO WCZESNIEJ*/{
+                    node newNode = createNode(1);
+                    Graph1->currentNode = newNode;
+                    Graph1->currentNode->allEdges[j] = line4[line5[i]+1+j]; // issue - allEdges[j]
+                    /*to be continued*/
+                }else if (Graph1->currentNode->arraySize != 0 && j == 0)/*PRIMARY NODE BYLO WCZESNIEJ*/{
+                    /*to be continued*/
+                }else if (Graph1->currentNode->arraySize != 0 && j != 0)/*FOREIGN NODE BYLO WCZESNIEJ*/ {
+                    /*to be continued*/
+                }
+            Graph1 = Graph1->next;
+        }
+    }
 
     free(line4);
     free(line5);
