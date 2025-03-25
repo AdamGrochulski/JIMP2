@@ -106,7 +106,7 @@ int findLastNode(const char *fileName) {
 }
 
 /*Creating a graph*/
-graph createGraph(const char *fileName) {
+graph declareGraph(const char *fileName) {
     graph first = NULL;
     graph temp = NULL;
     graph current = NULL;
@@ -149,10 +149,22 @@ graph findNodeID(graph Miautoni, int nodeID) {
     return NULL;
 };
 
+graph searchNodeID(graph Graph, int nodeID) {
+    graph Graph1 = Graph;
+
+    while(Graph1->nodeID != nodeID) {
+        if(Graph1->nodeID == nodeID) {
+            return Graph1;
+        }
+        Graph1 = Graph1->next;
+    }
+
+    return NULL;
+}
 
 /*adding all edges to graph and assigning values*/
-graph addEdges(const char *fileName) {
-    graph Graph = createGraph(fileName);
+graph createGraph(const char *fileName) {
+    graph Graph = declareGraph(fileName);
     const int lastNode = findLastNode(fileName);
     const int arraySize = 10; // nwm jaka tu powinna byc wartosc ---
     const int n4 = numElements(fileName, 4);
@@ -162,47 +174,124 @@ graph addEdges(const char *fileName) {
     int allEdgesArraySize;
     graph Graph1 = Graph;
 
+    /*Assigning nodeID to the Graph*/
+    for (int i = 0; i < lastNode; i++) {
+        Graph1->nodeID = i;
+        Graph1->currentNode->arraySize = 0;
+        Graph1 = Graph1->next;
+    }
+    Graph1 = Graph;
 
-    for(int i = 0; i < n5; i++) {
-        if(n5 != i++) {
-            Graph1->nodeID = line4[line5[i]];
-            allEdgesArraySize = line5[i++] - line5[i] - 1;
-            for(int j = 0; j < allEdgesArraySize; j++) {
-                Graph1->nodeID = line4[line5[i]];
-                if(Graph1->currentNode->arraySize == 0 && j == 0) /*PRIMARY NODE NIE BYLO WCZESNIEJ*/{
-                    //Stworzyc wezel
-                    //Umiescicic go w strcu graph
-                    node newNode = createNode(allEdgesArraySize);
+    node newNode = NULL;
+    int n = 0;
+    graph Graph2 = NULL;
+    int PK;
+    int *arr;
+    int *res;
+
+    for(int i = 0; i < n4; i++) {
+        //Najpierw stworzmy graph gdzie bedzie nameID dla wszystkich wierzcholków (easy) ok
+        for(int j = 0; j < n5; j++) {
+            if (i == line4[line5[j]]) { // jesli indeks i oraz indeks z lini 4 (PK) pasuje
+                //jesli jakis wezel ma juz jakies dane!
+                PK = i;
+                if (Graph1->currentNode->arraySize == 0) {
+                    Graph1->nodeID = line4[line5[j]];
+                    n = line5[j+1] - line5[j] - 1;
+                    newNode = createNode(n);
+                    /*Wpisanie 72;39;91;4;54 do allEdegs */
+                    newNode->allEdges = malloc(sizeof(int) * n);
+                    for (int k = 0; k < n; k++) {
+                        newNode->allEdges[k] = line4[1 + line5[j] + k]; //chyba ok  trzeba jeszcze sprawdzic
+                    }
                     Graph1->currentNode = newNode;
-                    Graph1->currentNode->allEdges[] = line4[line5[i]+1+j]; //allEdges[ ]
-                }else if (Graph1->currentNode->arraySize == 0 && j != 0) /*FOREIGN NODE NIE BYLO WCZESNIEJ*/{
-                    node newNode = createNode(1);
-                    Graph1->currentNode = newNode;
-                    Graph1->currentNode->allEdges[j] = line4[line5[i]+1+j]; // issue - allEdges[j]
-                    /*to be continued*/
-                }else if (Graph1->currentNode->arraySize != 0 && j == 0)/*PRIMARY NODE BYLO WCZESNIEJ*/{
-                    /*to be continued*/
-                }else if (Graph1->currentNode->arraySize != 0 && j != 0)/*FOREIGN NODE BYLO WCZESNIEJ*/ {
-                    /*to be continued*/
+                }else {
+                    arr = Graph1->currentNode->allEdges;
+                    n = line5[j+1] - line5[j] - 1;
+                    Graph1->currentNode->arraySize+n;
+                    res = realloc(arr, sizeof(int) * Graph1->currentNode->arraySize);
+                    if (res == NULL) {
+                        free(arr);
+                        exit(2137);
+                    }
+                    arr = res;
+                    for (int k = Graph1->currentNode->arraySize - n, l = 0 ; l < n; k++, l++) {
+                        arr[k] = line4[1 + line5[j] + l];
+                    }
+                    arr = Graph1->currentNode->allEdges;
+                    // reallocowac pamiec
+                    // musimy przejsc do konca tablicy
+                    // dodac te wartosci
                 }
-            Graph1 = Graph1->next;
+                Graph1 = Graph1->next;
+            }else {
+                //Musimy wpisac 72;39;91;4;54 do allEdegs ok
+                //Stworzyc / sprawdzic czy istenija  72;39;91;4;54 - 2 przypadki
+                // nie stowrzyc tylko przejsc do 72 i dopisac tam 0 (bo node istnieje);
+                //trzeba jeszcze przejsc na koniec tablicy
+                if (Graph1->currentNode->arraySize == 0) {
+                    Graph2 = searchNodeID(Graph1, i);
+                    Graph2->currentNode->allEdges = malloc(sizeof(int));
+                    if(!Graph2->currentNode->allEdges) {
+                        perror("Memory allocation failed!");
+                        exit(2137);
+                    }
+                    arr = Graph2->currentNode->allEdges;
+
+                    arr[0] = PK;
+                    Graph2->currentNode->allEdges = arr;
+                }else {
+                    Graph2 = searchNodeID(Graph1, i);
+                    arr = Graph2->currentNode->allEdges;
+                    Graph2->currentNode->arraySize++;
+
+                    res = realloc(Graph2->currentNode->allEdges, Graph2->currentNode->arraySize * sizeof(int));
+                    if (res == NULL) {
+                        free(arr);
+                        exit(2137);
+                    }
+                    arr[Graph2->currentNode->arraySize-1] = PK;
+                    Graph2->currentNode->allEdges = arr;
+                }
+                // ----- Do  72;39;91;4;54 wpisac 0 (PK)  -----
+                // Szukaj(currentNode: 72) --> idziemy do node --> Realloc o jeden element  ---> dodajemy 0
+                // Szukaj(currentNode: 39) --> idziemy do node --> Realloc o jeden element  ---> dodajemy 0
+                // Szukaj(currentNode: 91) --> idziemy do node --> Realloc o jeden element  ---> dodajemy 0
+                // Szukaj(currentNode: 4) --> idziemy do node --> Realloc o jeden element  ---> dodajemy 0
+                // Szukaj(currentNode: 54) --> idziemy do node --> Realloc o jeden element  ---> dodajemy 0
+                //                            (2-3) Graph1->currentNode->allEdges (realloc)
+            }
         }
     }
 
+    arr = NULL;
+    res = NULL;
     free(line4);
     free(line5);
     return Graph;
 }
 
-int main(int argc, char *argv[]) {
-    const char *fileName = "graf.csrrg";
-    int lineNumber = 4;
-    int n = numElements(fileName, lineNumber);
-    int *array = readLine(fileName, lineNumber, n);
-    for (int i = 0; i < n; i++) {
-        printf("%d ", array[i]);
+void printGraph(graph Graph) {
+    graph Graph1 = Graph;
+    while(Graph1 != NULL) {
+        printf("%d: [", Graph1->nodeID);
+        for(int i = 0; i < Graph1->currentNode->arraySize; i++) {
+            if(i ==  Graph1->currentNode->arraySize - 1) {
+                printf("%d ]\n", Graph1->currentNode->allEdges[i]);
+            }else {
+                printf("%d, ", Graph1->currentNode->allEdges[i]);
+            }
+        }
+        Graph1 = Graph1->next;
     }
-    printf("\n");
-    free(array);
+}
+
+
+int main(int argc, char *argv[]){
+    const char *fileName = "graf.csrrg";
+    graph Graph = createGraph(fileName);
+
+    printGraph(Graph);
+
     return 0;
 }
