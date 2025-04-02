@@ -22,6 +22,7 @@ typedef struct graph {
 }*graph;
 
 node createNode(int arraySize);
+node findNode(graph Graph, int nodeIndex);
 int numElements(const char *fileName, int lineNumber);
 int *readLine(const char *fileName, int lineNumber, int n);
 int findLastNode(const char *fileName);

@@ -10,11 +10,23 @@ node createNode(int arraySize) {
     newNode->arraySize = arraySize;
     newNode->allEdges  = (arraySize > 0) ? malloc(sizeof(int) * newNode->arraySize) : NULL;
     newNode->divSize = 0;
+    newNode->group = 0;
     newNode->internalEdges = NULL;
     newNode->externalEdges = NULL;
     newNode->difference = 0;
     return newNode;
 }
+
+node findNode(graph Graph, int nodeIndex){
+    graph takenGraph = Graph;
+    int currentIndex = 0;
+    while(currentIndex != nodeIndex){
+        takenGraph=takenGraph->next;
+        currentIndex++;
+    }
+    return takenGraph->currentNode;
+}
+
 
 /*Number of elements in a "*.csrrg" file*/
 int numElements(const char *fileName, int lineNumber) {
@@ -183,11 +195,6 @@ graph createGraph(const char *fileName) {
             adjacentNode->currentNode->arraySize = newAdjacentArraySize;
         }
     }
-    graph Graph2 = Graph;
-    while (Graph2 != NULL) {
-        Graph2->numNodes--;
-        Graph2 = Graph2->next;
-    }
     free(line4);
     free(line5);
     return Graph;
@@ -203,6 +210,7 @@ void printGraph(graph Graph){
             if(i ==  Graph1->currentNode->arraySize - 1) {
                 printf("%d] \n", Graph1->currentNode->allEdges[i]);
                 printf("Array size: %d\n", Graph1->currentNode->arraySize);
+                printf("Group: %d\n", Graph1->currentNode->group);
                 printf("Num of nodes: %d", Graph1->numNodes);
                 printf("\n");
             }else {
