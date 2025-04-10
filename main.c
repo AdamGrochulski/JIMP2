@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
     //Sprawdzamy wartości potrzebne do poprawnego działania programu
     if(allVariablesChecker(inputFile,outputFile,margin,partition)==false){
         return EXIT_FAILURE;
@@ -165,11 +166,11 @@ int main(int argc, char *argv[]) {
     //Przebieg działania programu sliceIt
     graph Graph = createGraph(inputFile);
     createNodeGroups(Graph,margin,partition);
+    subarray(Graph);
     printGraph(Graph);
     freeGraph(Graph);
 
-
-
+    //funkcja, która przypisuje wierzchołkom odpowiednie grupy
 
     return EXIT_SUCCESS;
 }

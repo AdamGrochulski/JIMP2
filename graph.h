@@ -8,7 +8,8 @@ typedef struct node {
     int arraySize; // Number of elements in allEdges array
     int *allEdges; // all connections with a node
     int group;
-    int divSize; // divSize = arraySize/2
+    int internalSize;
+    int externalSize;
     int *internalEdges; // all internal connections with a node
     int *externalEdges; // all external connections with a node
     int difference; // difference = numExternal - numInternal
