@@ -12,7 +12,8 @@ typedef struct node {
     int externalSize;
     int *internalEdges; // all internal connections with a node
     int *externalEdges; // all external connections with a node
-    int difference; // difference = numExternal - numInternal
+    int difference; // difference = numExternal - numInternal (dla najlepszego externalSize)
+    int locked; // 0 jeśli możliwa jest operacja zamiany, 1 jeśli nie można zamienić wierzchołka
 }*node;
 
 typedef struct graph {

@@ -130,10 +130,10 @@ void subarraysize(graph Graph) {
             }
         }
         Graph1->currentNode->externalSize = Graph1->currentNode->arraySize - Graph1->currentNode->internalSize;
-        printf("internalSize: %d ExternalSize: %d ArraySize: %d\n",
-               Graph1->currentNode->internalSize,
-               Graph1->currentNode->externalSize,
-               Graph1->currentNode->arraySize);
+        // printf("internalSize: %d ExternalSize: %d ArraySize: %d\n",
+        //        Graph1->currentNode->internalSize,
+        //        Graph1->currentNode->externalSize,
+        //        Graph1->currentNode->arraySize);
     }
 }
 

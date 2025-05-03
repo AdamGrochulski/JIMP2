@@ -16,6 +16,7 @@ node createNode(int arraySize) {
     newNode->internalEdges = NULL;
     newNode->externalEdges = NULL;
     newNode->difference = 0;
+    newNode->locked = 0;
     return newNode;
 }
 
@@ -141,7 +142,7 @@ graph createGraph(const char *fileName) {
     int totalNodes = findLastNode(fileName);
     graph Graph1 = Graph;
     /*Assigning values to the Graph*/
-    for (int i = 0; i < totalNodes; i++) {
+    for(int i = 0; i < totalNodes; i++) {
         Graph1->nodeID = i;
         Graph1->currentNode = createNode(0);
         Graph1 = Graph1->next;
@@ -241,12 +242,12 @@ void printGraph(graph Graph) {
             }
         }
         printf("]\n");
+        printf("Difference: %d\n", curr->currentNode->difference);
 
         curr = curr->next;
     }
     printf("---------------------------\n");
 }
-
 
 void freeGraph(graph Graph) {
     graph current = Graph;
