@@ -19,6 +19,9 @@ bool evenOneFalse(bool isNodeCounted[], int nodeCount);
 int compare(const void *a, const void *b);
 void algDjikstry(graph Graph, paths *Path, int startingNode);
 void createNodeGroups(graph Graph, int margin, int partition);
-
+int findMax(graph Graph);
+void subarraysize(graph Graph);
+int findGroup(graph Graph, int node);
+void subarray(graph Graph);
 
 #endif

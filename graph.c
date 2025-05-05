@@ -1,4 +1,5 @@
 #include "graph.h"
+#include <stdio.h>
 
 /*Allocating memory for arrays, assigning nodeID and arraySize*/
 node createNode(int arraySize) {
@@ -9,11 +10,13 @@ node createNode(int arraySize) {
     }
     newNode->arraySize = arraySize;
     newNode->allEdges  = (arraySize > 0) ? malloc(sizeof(int) * newNode->arraySize) : NULL;
-    newNode->divSize = 0;
+    newNode->internalSize = 0;
+    newNode->externalSize = 0;
     newNode->group = 0;
     newNode->internalEdges = NULL;
     newNode->externalEdges = NULL;
     newNode->difference = 0;
+    newNode->locked = 0;
     return newNode;
 }
 
@@ -139,7 +142,7 @@ graph createGraph(const char *fileName) {
     int totalNodes = findLastNode(fileName);
     graph Graph1 = Graph;
     /*Assigning values to the Graph*/
-    for (int i = 0; i < totalNodes; i++) {
+    for(int i = 0; i < totalNodes; i++) {
         Graph1->nodeID = i;
         Graph1->currentNode = createNode(0);
         Graph1 = Graph1->next;
@@ -200,28 +203,51 @@ graph createGraph(const char *fileName) {
     return Graph;
 }
 
-
-void printGraph(graph Graph){
-    graph Graph1 = Graph;
-    while(Graph1 != NULL) {
+void printGraph(graph Graph) {
+    graph curr = Graph;
+    while (curr != NULL) {
         printf("---------------------------\n");
-        printf("Node %d: [", Graph1->nodeID);
-        for(int i = 0; i < Graph1->currentNode->arraySize; i++) {
-            if(i ==  Graph1->currentNode->arraySize - 1) {
-                printf("%d] \n", Graph1->currentNode->allEdges[i]);
-                printf("Array size: %d\n", Graph1->currentNode->arraySize);
-                printf("Group: %d\n", Graph1->currentNode->group);
-                printf("Num of nodes: %d", Graph1->numNodes);
-                printf("\n");
-            }else {
-                printf("%d,", Graph1->currentNode->allEdges[i]);
+        printf("Node %d: [", curr->nodeID);
+
+        for (int i = 0; i < curr->currentNode->arraySize; i++) {
+            if (i == curr->currentNode->arraySize - 1) {
+                printf("%d] \n", curr->currentNode->allEdges[i]);
+            } else {
+                printf("%d, ", curr->currentNode->allEdges[i]);
             }
         }
-        Graph1 = Graph1->next;
+        
+        printf("Array size: %d\n", curr->currentNode->arraySize);
+        printf("Group: %d\n", curr->currentNode->group);
+        printf("Num of nodes: %d\n", curr->numNodes);
+
+        printf("Internal Size: %d\n", curr->currentNode->internalSize);
+        printf("Internal Edges: [");
+        for (int i = 0; i < curr->currentNode->internalSize; i++) {
+            if (i == curr->currentNode->internalSize - 1) {
+                printf("%d", curr->currentNode->internalEdges[i]);
+            } else {
+                printf("%d, ", curr->currentNode->internalEdges[i]);
+            }
+        }
+        printf("]\n");
+
+        printf("External Size: %d\n", curr->currentNode->externalSize);
+        printf("External Edges: [");
+        for (int i = 0; i < curr->currentNode->externalSize; i++) {
+            if (i == curr->currentNode->externalSize - 1) {
+                printf("%d", curr->currentNode->externalEdges[i]);
+            } else {
+                printf("%d, ", curr->currentNode->externalEdges[i]);
+            }
+        }
+        printf("]\n");
+        printf("Difference: %d\n", curr->currentNode->difference);
+
+        curr = curr->next;
     }
     printf("---------------------------\n");
 }
-
 
 void freeGraph(graph Graph) {
     graph current = Graph;

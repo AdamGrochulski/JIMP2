@@ -115,3 +115,57 @@ void createNodeGroups(graph Graph, int margin, int partition){
     }
     free(Paths);
 }
+
+void subarraysize(graph Graph) {
+    graph Graph1;
+    for (Graph1 = Graph; Graph1 != NULL; Graph1 = Graph1->next) {
+        Graph1->currentNode->internalSize = 0;
+        Graph1->currentNode->externalSize = 0;
+    }
+
+    for(Graph1 = Graph; Graph1 != NULL; Graph1 = Graph1->next) {
+        for(int i = 0; i < Graph1->currentNode->arraySize; i++) {
+            if (findGroup(Graph, Graph1->currentNode->allEdges[i]) == Graph1->currentNode->group) {
+                Graph1->currentNode->internalSize++;
+            }
+        }
+        Graph1->currentNode->externalSize = Graph1->currentNode->arraySize - Graph1->currentNode->internalSize;
+        // printf("internalSize: %d ExternalSize: %d ArraySize: %d\n",
+        //        Graph1->currentNode->internalSize,
+        //        Graph1->currentNode->externalSize,
+        //        Graph1->currentNode->arraySize);
+    }
+}
+
+// funkcja szuka grupy dla wierzcholaka targetID
+int findGroup(graph Graph, int targetID) {
+    graph curr = Graph;
+    while (curr != NULL) {
+        if (curr->nodeID == targetID) {
+            return curr->currentNode->group;
+        }
+        curr = curr->next;
+    }
+    perror("Niepoprawny identyfikator węzła\n");
+    return -1;
+}
+
+// Funkcja przydziela krawędzie do internalEdges i externalEdges
+void subarray(graph Graph) {
+    graph curr;
+    subarraysize(Graph);
+    for(curr = Graph; curr != NULL; curr = curr->next) {
+        curr->currentNode->internalEdges = malloc(sizeof(int) * curr->currentNode->internalSize);
+        curr->currentNode->externalEdges = malloc(sizeof(int) * curr->currentNode->externalSize);
+
+        int internalIdx = 0, externalIdx = 0;
+
+        for (int i = 0; i < curr->currentNode->arraySize; i++) {
+            if (findGroup(Graph, curr->currentNode->allEdges[i]) == curr->currentNode->group) {
+                curr->currentNode->internalEdges[internalIdx++] = curr->currentNode->allEdges[i];
+            } else {
+                curr->currentNode->externalEdges[externalIdx++] = curr->currentNode->allEdges[i];
+            }
+        }
+    }
+}

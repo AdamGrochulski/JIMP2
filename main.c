@@ -7,6 +7,7 @@
 //Biblioteki programu sliceIt
 #include "graph.h"
 #include "Dijkstra.h"
+#include "KernighanLin.h"
 
 //Funkcja do zmienia koloru tekstu (zrobiona w celach estetycznych)
 void Colors(int type) {
@@ -23,6 +24,7 @@ void Colors(int type) {
     if (type == 5) //Zmiana koloru na żółty
         printf("\033[1;33m");
 }
+
 
 bool allVariablesChecker(char *inputFile, char *outputFile, int margin, int partition){
     int errorCounter = 0;
@@ -49,8 +51,6 @@ bool allVariablesChecker(char *inputFile, char *outputFile, int margin, int part
     return true;
 }   
 
-
-
 int main(int argc, char *argv[]) {
     Colors(0); //Ustawienie koloru tekstu na domyślny
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     //Zmienne służące do dzielenia grafu
     int margin = -1; // Liczba -1 to stan nieprzetworzenia zmiennej
     int partition = -1;
-    
+
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"output", required_argument, 0, 'o'},
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
             case 'o':
                 outputFile = optarg;
                 break;
-            
+
                 break;
 
             case 'm':
@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
     //Sprawdzamy wartości potrzebne do poprawnego działania programu
     if(allVariablesChecker(inputFile,outputFile,margin,partition)==false){
         return EXIT_FAILURE;
@@ -165,11 +166,10 @@ int main(int argc, char *argv[]) {
     //Przebieg działania programu sliceIt
     graph Graph = createGraph(inputFile);
     createNodeGroups(Graph,margin,partition);
+    subarray(Graph);
+    //printGraph(Graph);
+    KernighanLinAlgorithm(Graph);
     printGraph(Graph);
     freeGraph(Graph);
-
-
-
-
     return EXIT_SUCCESS;
 }
