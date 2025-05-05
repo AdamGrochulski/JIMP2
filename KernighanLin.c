@@ -3,19 +3,6 @@
 #include "Dijkstra.h"
 #include <limits.h>
 
-/*Działanie algorytmu
- * 1. Oblicz D
- * 2. Znaleźć największy zysk dla 2 wierzchołków
- * 3. Mamy wierzchołki A i B
- * 4. Zamieniamy te wierzchołki grupami
- * 5. Zmieniamy dane w wierzchołku A i B InternalSize, InternalEdges, ExternalSize, ExternalEdges
- * 6. Sąsiądy wierzchołków A i B zamieniają wierzchołek A i B w External i Internal Edges, External, Internal Size
- * 7. Ustawiamu locked na 1
- * 8. Działamy dalej, aż rezultaty nie bedą przynosiły zysku
- * 9. Printować wszystkie wierzchołki w odpowienich grupach
- * 10. (?) Tworzymy nowe podgrafy (nowa struktura)(chyba będzie najwygodniej)
- */
-
 /*Szukamy w strukturze Graph wierzchołka o indeksie 'index' */
 graph locateNode(graph Graph, int index) {
     graph Graph1 = Graph;
@@ -89,13 +76,6 @@ int findBestGroup(graph Graph, graph graphOrigin) {
     //     exit(1);
     // }
 
-
-    /**
-     *tutaj jeszcze pętla for dla sprawdzenia czy mozna w ogóle
-     *rozwazac wierzchołki w tej grupie (czy mają prawidłowe locked)
-     * -> Jeśli nie to zwraca gorszą grupę, która może być niezaakceptowana w dalszych
-     * krokach algorytmu (zależne od sprawdzenia czy gain dla wybranej pary wynosi wicej niz 0)
-     */
     int potentialCandidates[Graph->currentNode->externalSize];
     for (int i = 0; i < Graph->currentNode->externalSize; i++) {
         potentialCandidates[i] = -1;
@@ -198,20 +178,18 @@ int countGain(pair Pair) {
 
 /*Dopasowujemy Wierzchołek B tak, aby difference dla pary był jak największy*/
 void adjustNodeB(graph Graph, pair Pair, graph graphOrigin) {
-
-    // Mamy ExternalArrayA i ExternalArraySizeA
     int bestGroup = findBestGroup(Graph, graphOrigin);
     int maxDiff = INT_MIN;
     int maxID = -1;
-    for(int i = 0; i < Graph->currentNode->externalSize; i++) {
-        graph gB = locateNode(graphOrigin, Graph->currentNode->externalEdges[i]);
-        if(gB->currentNode->locked == 1) {
+
+    // Wybieramy kandydata jako wierzchołek B
+    for (int i = 0; i < Graph->currentNode->externalSize; i++) {
+        graph candidate = locateNode(graphOrigin, Graph->currentNode->externalEdges[i]);
+        if (candidate->currentNode->locked == 1) {
             continue;
         }
-
-        int bDiff = countDifference(gB, Graph, graphOrigin);
-
-        if (bDiff>maxDiff && gB->currentNode->group == bestGroup) {
+        int bDiff = countDifference(candidate, Graph, graphOrigin);
+        if (bDiff > maxDiff && candidate->currentNode->group == bestGroup) {
             maxDiff = bDiff;
             maxID = Graph->currentNode->externalEdges[i];
         }
@@ -219,19 +197,19 @@ void adjustNodeB(graph Graph, pair Pair, graph graphOrigin) {
 
     graph gA = Graph;
     if(maxID == -1) {
-        //Nie ma żadnego wierzchołka B do wymiany
-        printf("Nie ma żadnego wierzchołka B do wymiany\n");
-    }else {
+        // Brak kandydata w danej grupie
+        //fprintf(stderr, "Brak dostępnego kandydata B do zamiany\n");
+        return;
+    } else {
         graph gB = locateNode(graphOrigin, maxID);
         Pair->nodeIndexB = maxID;
-        int extSizeB = 0;
         Pair->DifferenceA = countDifference(gA, gB, graphOrigin);
         Pair->DifferenceB = countDifference(gB, gA, graphOrigin);
 
-        /*Pozostało tu przypisac dane wierzchołka B pasujace do wierzchołka A*/
-        for(int i = 0; i < gB->currentNode->externalSize; i++) {
-            graph tempA = locateNode(graphOrigin, gB->currentNode->externalEdges[i]);
-            if(tempA->currentNode->group == gB->currentNode->group) {
+        int extSizeB = 0;
+        for (int i = 0; i < gB->currentNode->externalSize; i++) {
+            graph neighbor = locateNode(graphOrigin, gB->currentNode->externalEdges[i]);
+            if (neighbor->currentNode->group == gA->currentNode->group) {
                 extSizeB++;
             }
         }
@@ -239,10 +217,9 @@ void adjustNodeB(graph Graph, pair Pair, graph graphOrigin) {
         Pair->externalArrayNodeBSize = extSizeB;
         int j = 0;
         Pair->externalArrayNodeB = malloc(sizeof(int) * extSizeB);
-
-        for(int i = 0; i < gB->currentNode->externalSize; i++) {
-            graph tempA = locateNode(graphOrigin, gB->currentNode->externalEdges[i]);
-            if(tempA->currentNode->group == gB->currentNode->group) {
+        for (int i = 0; i < gB->currentNode->externalSize; i++) {
+            graph neighbor = locateNode(graphOrigin, gB->currentNode->externalEdges[i]);
+            if (neighbor->currentNode->group == gA->currentNode->group) {
                 Pair->externalArrayNodeB[j++] = gB->currentNode->externalEdges[i];
             }
         }
@@ -250,6 +227,7 @@ void adjustNodeB(graph Graph, pair Pair, graph graphOrigin) {
         Pair->gain = countGain(Pair);
     }
 }
+
 
 
 /*Inicjalizacja pojedynczej pary*/
@@ -307,25 +285,328 @@ void freePair(pair Pair) {
 }
 
 
+/*Znajdowanie najlepszej pary do zamiany*/
+pair findBestPair(pair Pair) {
+    if (Pair == NULL) {
+        fprintf(stderr, "Lista par jest niezainicjalizowana\n");
+        exit(1);
+    }
+    pair bestPair = Pair;
+    pair current = Pair;
+    int maxGain = current->gain;
+
+    while (current != NULL) {
+        if (current->gain > maxGain) {
+            maxGain = current->gain;
+            bestPair = current;
+        }
+        current = current->next;
+    }
+
+    return bestPair;
+}
+
+
+/*Printowanie najlepszej pary*/
+void printSwap(pair Pair, graph graphOrigin) {
+    if (Pair == NULL) {
+        fprintf(stderr, "Błąd: Pointer do Pair jest NULL.\n");
+        return;
+    }
+    if (graphOrigin == NULL) {
+        fprintf(stderr, "Błąd: Pointer do graphOrigin jest NULL.\n");
+        return;
+    }
+
+    graph gA = locateNode(graphOrigin, Pair->nodeIndexA);
+    graph gB = locateNode(graphOrigin, Pair->nodeIndexB);
+
+    printf("----------------------------------\n");
+    printf("Informacje o Pair:\n");
+    printf("ID: %d\n", Pair->id);
+    printf("Node A Index: %d\n", Pair->nodeIndexA);
+    printf("Node B Index: %d\n", Pair->nodeIndexB);
+    printf("Gain: %d\n", Pair->gain);
+    printf("DifferenceA: %d\n", Pair->DifferenceA);
+    printf("DifferenceB: %d\n", Pair->DifferenceB);
+
+    printf("External Array dla Node A (rozmiar: %d): ", Pair->externalArrayNodeASize);
+    if (Pair->externalArrayNodeA != NULL && Pair->externalArrayNodeASize > 0) {
+        printf("[");
+        for (int i = 0; i < Pair->externalArrayNodeASize; i++) {
+            if (i == Pair->externalArrayNodeASize - 1) {
+                printf("%d", Pair->externalArrayNodeA[i]);
+            } else {
+                printf("%d, ", Pair->externalArrayNodeA[i]);
+            }
+        }
+        printf("]\n");
+    } else {
+        printf("Brak danych\n");
+    }
+
+    // Drukowanie External Array dla Node B
+    printf("External Array dla Node B (rozmiar: %d): ", Pair->externalArrayNodeBSize);
+    if (Pair->externalArrayNodeB != NULL && Pair->externalArrayNodeBSize > 0) {
+        printf("[");
+        for (int i = 0; i < Pair->externalArrayNodeBSize; i++) {
+            if (i == Pair->externalArrayNodeBSize - 1) {
+                printf("%d", Pair->externalArrayNodeB[i]);
+            } else {
+                printf("%d, ", Pair->externalArrayNodeB[i]);
+            }
+        }
+        printf("]\n");
+    } else {
+        printf("Brak danych\n");
+    }
+
+    puts("-----");
+
+    // Drukowanie informacji dla Node A
+    if (gA != NULL) {
+        printf("Node A (ID: %d):\n", gA->nodeID);
+        printf("Grupa: %d\n", gA->currentNode->group);
+        printf("InternalSize: %d\n", gA->currentNode->internalSize);
+        printf("InternalEdges: [");
+        if (gA->currentNode->internalSize > 0) {
+            for (int i = 0; i < gA->currentNode->internalSize; i++) {
+                if (i == gA->currentNode->internalSize - 1) {
+                    printf("%d", gA->currentNode->internalEdges[i]);
+                } else {
+                    printf("%d, ", gA->currentNode->internalEdges[i]);
+                }
+            }
+            printf("]\n");
+        } else {
+            printf("]\n");
+        }
+        printf("ExternalSize: %d\n", gA->currentNode->externalSize);
+        printf("ExternalEdges: [");
+        // Używamy prawidłowego warunku dla externalEdges w Node A
+        if (gA->currentNode->externalSize > 0) {
+            for (int i = 0; i < gA->currentNode->externalSize; i++) {
+                if (i == gA->currentNode->externalSize - 1) {
+                    printf("%d", gA->currentNode->externalEdges[i]);
+                } else {
+                    printf("%d, ", gA->currentNode->externalEdges[i]);
+                }
+            }
+            printf("]\n");
+        } else {
+            printf("]\n");
+        }
+        printf("Difference: %d\n", gA->currentNode->difference);
+    } else {
+        printf("Node A nie został znaleziony w grafie.\n");
+    }
+
+    puts("-----");
+
+    if (gB != NULL) {
+        printf("Node B (ID: %d):\n", gB->nodeID);
+        printf("Grupa: %d\n", gB->currentNode->group);
+        printf("InternalSize: %d\n", gB->currentNode->internalSize);
+        printf("InternalEdges: [");
+        if (gB->currentNode->internalSize > 0) {
+            for (int i = 0; i < gB->currentNode->internalSize; i++) {
+                if (i == gB->currentNode->internalSize - 1) {
+                    printf("%d", gB->currentNode->internalEdges[i]);
+                } else {
+                    printf("%d, ", gB->currentNode->internalEdges[i]);
+                }
+            }
+            printf("]\n");
+        } else {
+            printf("]\n");
+        }
+        printf("ExternalSize: %d\n", gB->currentNode->externalSize);
+        printf("ExternalEdges: [");
+        if (gB->currentNode->externalSize > 0) {
+            for (int i = 0; i < gB->currentNode->externalSize; i++) {
+                if (i == gB->currentNode->externalSize - 1) {
+                    printf("%d", gB->currentNode->externalEdges[i]);
+                } else {
+                    printf("%d, ", gB->currentNode->externalEdges[i]);
+                }
+            }
+            printf("]\n");
+        } else {
+            printf("]\n");
+        }
+        printf("Difference: %d\n", gB->currentNode->difference);
+    } else {
+        printf("Node B nie został znaleziony w grafie.\n");
+    }
+
+    printf("----------------------------------\n");
+}
 
 
 
 
+void swapAB(pair Pair, graph graphOrigin) {
+    if (Pair->nodeIndexA == Pair->nodeIndexB) {
+        return;
+    }
+    graph gA = locateNode(graphOrigin, Pair->nodeIndexA);
+    graph gB = locateNode(graphOrigin, Pair->nodeIndexB);
+
+    // A
+    int* builderInternalA;
+    int* builderExternalA;
+
+    int intA = Pair->externalArrayNodeASize;
+    builderInternalA = malloc(sizeof(int) * intA);
+    for (int i = 0; i < intA; i++) {
+        builderInternalA[i] = Pair->externalArrayNodeA[i];
+    }
+
+    int newSizeA = (gA->currentNode->externalSize - intA) + gA->currentNode->internalSize;
+    builderExternalA = malloc(sizeof(int) * newSizeA);
+
+    int countA = 0;
+    for (int j = 0; j < gA->currentNode->externalSize; j++) {
+        int skip = 0;
+        for (int i = 0; i < intA; i++) {
+            if (gA->currentNode->externalEdges[j] == Pair->externalArrayNodeA[i]) {
+                skip = 1;
+                break;
+            }
+        }
+        if (!skip) {
+            builderExternalA[countA++] = gA->currentNode->externalEdges[j];
+        }
+    }
+
+    for (int k = 0; k < gA->currentNode->internalSize; k++) {
+        builderExternalA[countA++] = gA->currentNode->internalEdges[k];
+    }
+    int extA = countA;
+
+    int* builderInternalB;
+    int* builderExternalB;
+
+    // B:
+    int intB = Pair->externalArrayNodeBSize;
+    builderInternalB = malloc(sizeof(int) * intB);
+    for (int i = 0; i < intB; i++) {
+        builderInternalB[i] = Pair->externalArrayNodeB[i];
+    }
+
+    int newSizeB = (gB->currentNode->externalSize - intB) + gB->currentNode->internalSize;
+    builderExternalB = malloc(sizeof(int) * newSizeB);
+
+    int countB = 0;
+    for (int j = 0; j < gB->currentNode->externalSize; j++) {
+        int skip = 0;
+        for (int i = 0; i < intB; i++) {
+            if (gB->currentNode->externalEdges[j] == Pair->externalArrayNodeB[i]) {
+                skip = 1;
+                break;
+            }
+        }
+        if (!skip) {
+            builderExternalB[countB++] = gB->currentNode->externalEdges[j];
+        }
+    }
+    for (int k = 0; k < gB->currentNode->internalSize; k++) {
+        builderExternalB[countB++] = gB->currentNode->internalEdges[k];
+    }
+    int extB = countB;
+
+    free(gA->currentNode->internalEdges);
+    gA->currentNode->internalEdges = malloc(sizeof(int) * intA);
+    for (int i = 0; i < intA; i++) {
+        gA->currentNode->internalEdges[i] = builderInternalA[i];
+    }
+    gA->currentNode->internalSize = intA;
+
+    free(gA->currentNode->externalEdges);
+    gA->currentNode->externalEdges = malloc(sizeof(int) * extA);
+    for (int i = 0; i < extA; i++) {
+        gA->currentNode->externalEdges[i] = builderExternalA[i];
+    }
+    gA->currentNode->externalSize = extA;
+
+    // Zamiana grup między węzłami i ustawienie flagi (blokady) dla węzła A
+    int tempGrA = gA->currentNode->group;
+    gA->currentNode->group = gB->currentNode->group;
+    gA->currentNode->locked = 1;
+    gB->currentNode->group = tempGrA;
+
+    // Aktualizacja węzła B:
+    free(gB->currentNode->internalEdges);
+    gB->currentNode->internalEdges = malloc(sizeof(int) * intB);
+    for (int i = 0; i < intB; i++) {
+        gB->currentNode->internalEdges[i] = builderInternalB[i];
+    }
+    gB->currentNode->internalSize = intB;
+
+    free(gB->currentNode->externalEdges);
+    gB->currentNode->externalEdges = malloc(sizeof(int) * extB);
+    for (int i = 0; i < extB; i++) {
+        gB->currentNode->externalEdges[i] = builderExternalB[i];
+    }
+    gB->currentNode->externalSize = extB;
+
+    free(builderInternalA);
+    free(builderExternalA);
+    free(builderInternalB);
+    free(builderExternalB);
+}
+
+
+void updateGainStatus(pair Pair, int *Condition, graph graphOrigin) {
+    int allLocked = 1;
+    for (graph temp = graphOrigin; temp != NULL; temp = temp->next) {
+        if (temp->currentNode->locked == 0) {
+            allLocked = 0;
+            break;
+        }
+    }
+
+    pair BestPair = findBestPair(Pair);
+    // Jeśli najlepsza para ma gain <= 0, lub wszystkie węzły są locked, kończymy iteracje.
+    if (allLocked || (BestPair != NULL && BestPair->gain <= 0)) {
+        *Condition = 0;
+    }
+}
+
+
+/* Zamiana wierzchołków A i B – funkcja główna algorytmu Kernighana-Lina */
 void KernighanLinAlgorithm(graph graphOrigin) {
-    int LICZBA = 0;
-    while(LICZBA<1){
+    int iterations = 0;
+    int Condition = 1;
+
+    while (iterations < graphOrigin->numNodes && Condition) {
         graph Graph1 = graphOrigin;
         pair Pair = createPairs(Graph1);
 
-        /*Główna częśc kodu*/
-        while(Graph1 != NULL) {
-            assignExternalArrayNodeA(Graph1, Pair, graphOrigin);
-            adjustNodeB(Graph1, Pair, graphOrigin);
+        /*przetwarzamy każdą parę */
+        pair currentPair = Pair;
+        while (Graph1 != NULL && currentPair != NULL) {
+            assignExternalArrayNodeA(Graph1, currentPair, graphOrigin);
+            adjustNodeB(Graph1, currentPair, graphOrigin);
+
             Graph1 = Graph1->next;
+            currentPair = currentPair->next;
         }
 
-        freePair(Pair);
-        LICZBA++;
-    }
+        updateGainStatus(Pair, &Condition, graphOrigin);
+        if (Condition == 0) {
+            freePair(Pair);
+            break;
+        }
 
+        pair BestPair = findBestPair(Pair);
+        printSwap(BestPair, graphOrigin);
+        swapAB(BestPair, graphOrigin);
+
+        freePair(Pair);
+        printf("Iteration: %d\n", iterations);
+        iterations++;
+    }
 }
+
+//W pair stworzyć wskaźnik do graph, żeby szybciekj szukać wierzchołków

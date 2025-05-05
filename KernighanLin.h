@@ -27,6 +27,10 @@ void adjustNodeB(graph Graph, pair Pair, graph graphOrigin);
 pair initializePair();
 pair createPairs(graph graphOriginal);
 void freePair(pair Pair);
+pair findBestPair(pair Pair);
+void printSwap(pair Pair, graph graphOrigin);
+void swapAB(pair Pair, graph graphOrign);
+void updateGainStatus(pair Pair, int *Condition, graph graphOrigin);
 void KernighanLinAlgorithm(graph graphOriginal);
 
 #endif
