@@ -171,7 +171,6 @@ void assignExternalArrayNodeA(graph Graph, pair Pair, graph graphOrigin) {
     }
 }
 
-
 /*Liczmy difference dla danej pary*/
 int countDifference(graph gB, graph gA, graph graphOrigin) {
     int externalSize = 0;
@@ -456,7 +455,6 @@ void printSwap(pair Pair, graph graphOrigin) {
 
     printf("----------------------------------\n");
 }
-
 
 /*Zamiana wierzchołków A i B między grupami*/
 void swapAB(pair Pair, graph graphOrigin) {

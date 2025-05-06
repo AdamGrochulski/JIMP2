@@ -244,7 +244,6 @@ void printGraph(graph Graph) {
         }
         printf("]\n");
         printf("Difference: %d\n", curr->currentNode->difference);
-        printf("locked: %d\n", curr->currentNode->locked);
 
         curr = curr->next;
     }
