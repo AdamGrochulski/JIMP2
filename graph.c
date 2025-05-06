@@ -250,6 +250,118 @@ void printGraph(graph Graph) {
     printf("---------------------------\n");
 }
 
+void notAlone(graph Graph, int partition){
+    graph takenGraph = Graph;
+    int takenNodeIndex = 0;
+    int aloneNodeIndex = 0;
+    int* groupSizes = malloc(sizeof(int) * partition);
+    for(int i = 0; i < partition; i++){
+        groupSizes[i] = 0;
+    }
+    graph temp = Graph;
+    int groupIndex = 0;
+    while(temp != NULL) {
+        groupIndex = temp->currentNode->group;
+        groupSizes[groupIndex-1] = groupSizes[groupIndex-1] + 1;
+        temp = temp->next;
+    }
+
+    while(takenGraph != NULL) {
+        takenNodeIndex=takenGraph->nodeID;
+        if(takenGraph->currentNode->internalSize == 0){
+            node tempNode = findNode(Graph,takenGraph->currentNode->allEdges[0]);
+            int minGroupSize = groupSizes[tempNode->group - 1];
+            int minIndex = takenGraph->currentNode->allEdges[0];
+            for(int j = 1; j < takenGraph->currentNode->arraySize; j++){
+                int considerIndex = takenGraph->currentNode->allEdges[j];
+                node considerNode = findNode(Graph,considerIndex);
+                int considerNodeGroup = considerNode->group;
+                if(groupSizes[considerNodeGroup - 1] < minGroupSize){
+                    minGroupSize = groupSizes[considerNodeGroup - 1];
+                    minIndex = considerIndex;
+                }
+            }
+            aloneNodeIndex = minIndex;
+            addToInternalEdges(Graph, takenNodeIndex, aloneNodeIndex);
+        }
+        takenGraph = takenGraph->next;
+    }
+}
+
+void addToInternalEdges(graph Graph, int takenNodeIndex, int aloneNodeIndex){
+    node takenNode = findNode(Graph, takenNodeIndex);
+    node aloneNode = findNode(Graph, aloneNodeIndex);
+
+    aloneNode->group = takenNode->group;
+    
+    int takenCloneSize = takenNode->internalSize;
+    int* takenClone = malloc(sizeof(int) * takenCloneSize);
+    for (int i = 0; i < takenCloneSize; i++) {
+        takenClone[i] = takenNode->internalEdges[i];
+    }
+    
+    int aloneCloneSize = aloneNode->internalSize;
+    int* aloneClone = malloc(sizeof(int) * aloneCloneSize);
+    for (int i = 0; i < aloneCloneSize; i++) {
+        aloneClone[i] = aloneNode->internalEdges[i];
+    }
+
+    free(takenNode->internalEdges);
+    free(aloneNode->internalEdges);
+
+    takenNode->internalSize = takenNode->internalSize + 1;
+    aloneNode->internalSize = aloneNode->internalSize + 1;
+
+    takenNode->internalEdges = malloc(sizeof(int) * takenNode->internalSize);
+    for (int i = 0; i < takenNode->internalSize-1; i++) {
+        takenNode->internalEdges[i] = takenClone[i];
+    }
+    takenNode->internalEdges[takenNode->internalSize-1] = aloneNodeIndex;
+
+    aloneNode->internalEdges = malloc(sizeof(int) * aloneNode->internalSize);
+    for (int i = 0; i < aloneNode->internalSize-1; i++) {
+        aloneNode->internalEdges[i] = aloneClone[i];
+    }
+    aloneNode->internalEdges[aloneNode->internalSize-1] = takenNodeIndex;
+
+    free(takenClone);
+    free(aloneClone);
+}
+
+void marginChecker(graph Graph, int partition, int margin){
+    graph takenGraph = Graph;
+    int* groupSizes = malloc(sizeof(int) * partition);
+    for(int i = 0; i < partition; i++){
+        groupSizes[i] = 0;
+    }
+    int groupIndex = 0;
+    while(takenGraph != NULL) {
+        groupIndex = takenGraph->currentNode->group;
+        groupSizes[groupIndex-1] = groupSizes[groupIndex-1] + 1;
+        takenGraph = takenGraph->next;
+    }
+
+    double max = groupSizes[0];
+    double min = groupSizes[0];
+
+    for(int i = 0; i < partition; i++){
+        printf("Grupa %d: %d\n",i+1,groupSizes[i]);
+        if(groupSizes[i]>max){
+            max = groupSizes[i];
+        }
+        else if(groupSizes[i]<min){
+            min = groupSizes[i];
+        }
+    }
+    printf("Max %lf\n",max);
+    printf("Min %lf\n",min);
+    double currentMargain = ( max / min ) - 1;
+
+    printf("CurrentMargain %lf\n",currentMargain);
+
+    free(groupSizes);
+}
+
 void freeGraph(graph Graph) {
     graph current = Graph;
     while (current != NULL) {
@@ -260,55 +372,3 @@ void freeGraph(graph Graph) {
     }
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-
-void checkInputFile(char *fileName) {
-    FILE *file = fopen(fileName, "r");
-    if (!file) {
-        perror("Brak pliku wejściowego");
-        exit(1);
-    }
-
-    char *lineBuffer = NULL;
-    size_t lineSizeBuffer = 0;
-    ssize_t read;
-    int numOfLines = 0;
-    char **line; // malloc na podstawie ilosci wczeniejszych lini
-    
-    int *lineSize = malloc(sizeof(int) * 5);
-
-    int id = 0;
-    while ((read = getline(&lineBuffer, &lineSizeBuffer, file)) != -1) {
-        numOfLines++;
-        lineSize[id] = (int)lineSizeBuffer;// coś jest nie tak
-
-        printf("%d linia (rozmiar %d)\n", id, lineSize[id]);
-        printf("%s\n", line[id]);
-        id++;
-    }
-
-    printf("Ilość linii: %d\n", numOfLines);
-
-
-
-
-    free(lineBuffer);
-    fclose(file);
-    exit(1);
-}
-
-
-
-static checkedNodes* usedNodes = NULL;
-static int usedNodesSize = 0;
-
-void initCheckedNodes(char* fileName) {
-    FILE *file = fopen(fileName, "r");
-    if (!file) {
-        fprintf(stderr, "Brak pliku o nazwie: %s\n", fileName);
-        exit(1);
-    }
-
-    fclose(file);
-}

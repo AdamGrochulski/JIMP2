@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct node {
     int arraySize; // Number of elements in allEdges array
@@ -37,7 +38,9 @@ graph declareGraph(const char *fileName);
 graph findNodeID(graph Miautoni, int nodeID);
 graph createGraph(const char *fileName);
 void printGraph(graph Graph);
+void notAlone(graph Graph, int partition);
+void addToInternalEdges(graph Graph, int takenNodeIndex, int aloneNodeIndex);
+void marginChecker(graph Graph, int partition, int margin);
 void freeGraph(graph Graph);
-void checkInputFile(char *fileName);
 
 #endif

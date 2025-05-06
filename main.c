@@ -170,7 +170,9 @@ int main(int argc, char *argv[]) {
     initializeNodeLookupTable(Graph);
     KernighanLinAlgorithm(Graph);
     freeNodeLookupTable();
+    notAlone(Graph,partition);
     printGraph(Graph);
+    marginChecker(Graph,partition,margin);
     saveToTxt(Graph,inputFile,outputFile,partition);
     freeGraph(Graph);
     return EXIT_SUCCESS;
