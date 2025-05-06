@@ -17,7 +17,9 @@ typedef struct pair {
     struct pair* next;
 }*pair;
 
+void initializeNodeLookupTable(graph graphOrigin);
 graph locateNode(graph Graph, int index);
+void freeNodeLookupTable();
 int findBestGroup(graph Graph, graph graphOrigin);
 int getExternalArraySize(graph Graph, graph graphOrigin);
 void assignExternalArrayNodeA(graph Graph, pair Pair, graph graphOrigin);
@@ -32,5 +34,8 @@ void printSwap(pair Pair, graph graphOrigin);
 void swapAB(pair Pair, graph graphOrign);
 void updateGainStatus(pair Pair, int *Condition, graph graphOrigin);
 void KernighanLinAlgorithm(graph graphOriginal);
+void calcDiff(graph graphOrigin);
+void displayResults(graph graphOrigin);
+void printLocked(graph graphOrigin);
 
 #endif

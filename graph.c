@@ -136,6 +136,7 @@ graph findNodeID(graph Miautoni, int nodeID) {
     return NULL;
 }
 
+
 /*adding all edges to graph and assigning values*/
 graph createGraph(const char *fileName) {
     graph Graph = declareGraph(fileName);
@@ -243,6 +244,7 @@ void printGraph(graph Graph) {
         }
         printf("]\n");
         printf("Difference: %d\n", curr->currentNode->difference);
+        printf("locked: %d\n", curr->currentNode->locked);
 
         curr = curr->next;
     }
@@ -257,4 +259,57 @@ void freeGraph(graph Graph) {
         free(temp->currentNode);
         free(temp);
     }
+}
+
+#include <stdio.h>
+#include <stdlib.h>
+
+void checkInputFile(char *fileName) {
+    FILE *file = fopen(fileName, "r");
+    if (!file) {
+        perror("Brak pliku wejściowego");
+        exit(1);
+    }
+
+    char *lineBuffer = NULL;
+    size_t lineSizeBuffer = 0;
+    ssize_t read;
+    int numOfLines = 0;
+    char **line; // malloc na podstawie ilosci wczeniejszych lini
+    
+    int *lineSize = malloc(sizeof(int) * 5);
+
+    int id = 0;
+    while ((read = getline(&lineBuffer, &lineSizeBuffer, file)) != -1) {
+        numOfLines++;
+        lineSize[id] = (int)lineSizeBuffer;// coś jest nie tak
+
+        printf("%d linia (rozmiar %d)\n", id, lineSize[id]);
+        printf("%s\n", line[id]);
+        id++;
+    }
+
+    printf("Ilość linii: %d\n", numOfLines);
+
+
+
+
+    free(lineBuffer);
+    fclose(file);
+    exit(1);
+}
+
+
+
+static checkedNodes* usedNodes = NULL;
+static int usedNodesSize = 0;
+
+void initCheckedNodes(char* fileName) {
+    FILE *file = fopen(fileName, "r");
+    if (!file) {
+        fprintf(stderr, "Brak pliku o nazwie: %s\n", fileName);
+        exit(1);
+    }
+
+    fclose(file);
 }
