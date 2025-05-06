@@ -3,23 +3,43 @@
 #include "Dijkstra.h"
 #include <limits.h>
 
-/*Szukamy w strukturze Graph wierzchołka o indeksie 'index' */
-graph locateNode(graph Graph, int index) {
-    graph Graph1 = Graph;
-    while(Graph1 != NULL) {
-        if(Graph1->nodeID == index) {
-            return Graph1;
-        }
-        Graph1 = Graph1->next;
-    }
+static graph *searchNodeTable = NULL;
+static int searchNodeTableSize = 0;
 
-    fprintf(stderr, ("Cannot find node with such index\n"));
-    return NULL;
+/*Inicjalizacja wskaźnika searchNodeTable na tablicę wskaźników do wierzchołków grafu*/
+void initializeNodeLookupTable(graph graphOrigin) {
+    graph temp = graphOrigin;
+    searchNodeTableSize = graphOrigin->numNodes;
+    searchNodeTable = malloc((searchNodeTableSize + 1) * sizeof(graph));
+    for (int i = 0; i <= searchNodeTableSize; i++)
+        searchNodeTable[i] = NULL;
+    temp = graphOrigin;
+    while (temp != NULL) {
+        searchNodeTable[temp->nodeID] = temp;
+        temp = temp->next;
+    }
+}
+
+
+/*Zwracamy wskaźnik o danym indeksie*/
+graph locateNode(graph Graph, int index) {
+    if (index < 0 || index > searchNodeTableSize || searchNodeTable[index] == NULL) {
+        fprintf(stderr, "Cannot find node with such index\n");
+        return NULL;
+    }
+    return searchNodeTable[index];
+}
+
+
+/*Zwolnienie pamięci*/
+void freeNodeLookupTable() {
+    free(searchNodeTable);
+    searchNodeTable = NULL;
+    searchNodeTableSize = 0;
 }
 
 
 /*Szuka najlepszej grupy dla węzła*/
-/*(!) Zastanowic sie czy nad algorytmem szukania wierzchołków dla gorszych grup*/
 int findBestGroup(graph Graph, graph graphOrigin) {
     /*Tabela licznosci grup połączonych z węzłem
      * 1 wiersz - indeks grupy
@@ -150,12 +170,6 @@ void assignExternalArrayNodeA(graph Graph, pair Pair, graph graphOrigin) {
         }
     }
 }
-
-/*
- * Mamy node A i jej dane
- * Szukamy wierzchołka B, dla którego gain dla A jest największy + locked
- * (!) Zastanowic sie czy nad algorytmem szukania wierzchołków dla gorszych grup
- */
 
 /*Liczmy difference dla danej pary*/
 int countDifference(graph gB, graph gA, graph graphOrigin) {
@@ -442,9 +456,7 @@ void printSwap(pair Pair, graph graphOrigin) {
     printf("----------------------------------\n");
 }
 
-
-
-
+/*Zamiana wierzchołków A i B między grupami*/
 void swapAB(pair Pair, graph graphOrigin) {
     if (Pair->nodeIndexA == Pair->nodeIndexB) {
         return;
@@ -557,6 +569,7 @@ void swapAB(pair Pair, graph graphOrigin) {
 }
 
 
+/*Warunek sprawdzający, czy dalej można liczyć*/
 void updateGainStatus(pair Pair, int *Condition, graph graphOrigin) {
     int allLocked = 1;
     for (graph temp = graphOrigin; temp != NULL; temp = temp->next) {
@@ -574,7 +587,50 @@ void updateGainStatus(pair Pair, int *Condition, graph graphOrigin) {
 }
 
 
-/* Zamiana wierzchołków A i B – funkcja główna algorytmu Kernighana-Lina */
+/*Printowanie określonego wierzchołka*/
+void printNode(graph curr) {
+    printf("---------------------------\n");
+    printf("Node %d: [", curr->nodeID);
+
+    for (int i = 0; i < curr->currentNode->arraySize; i++) {
+        if (i == curr->currentNode->arraySize - 1) {
+            printf("%d] \n", curr->currentNode->allEdges[i]);
+        } else {
+            printf("%d, ", curr->currentNode->allEdges[i]);
+        }
+    }
+
+    printf("Array size: %d\n", curr->currentNode->arraySize);
+    printf("Group: %d\n", curr->currentNode->group);
+    printf("Num of nodes: %d\n", curr->numNodes);
+
+    printf("Internal Size: %d\n", curr->currentNode->internalSize);
+    printf("Internal Edges: [");
+    for (int i = 0; i < curr->currentNode->internalSize; i++) {
+        if (i == curr->currentNode->internalSize - 1) {
+            printf("%d", curr->currentNode->internalEdges[i]);
+        } else {
+            printf("%d, ", curr->currentNode->internalEdges[i]);
+        }
+    }
+    printf("]\n");
+
+    printf("External Size: %d\n", curr->currentNode->externalSize);
+    printf("External Edges: [");
+    for (int i = 0; i < curr->currentNode->externalSize; i++) {
+        if (i == curr->currentNode->externalSize - 1) {
+            printf("%d", curr->currentNode->externalEdges[i]);
+        } else {
+            printf("%d, ", curr->currentNode->externalEdges[i]);
+        }
+    }
+    printf("]\n");
+    printf("Difference: %d\n", curr->currentNode->difference);
+    printf("locked: %d\n", curr->currentNode->locked);
+}
+
+
+/* Algorytm Kernighana-Lina*/
 void KernighanLinAlgorithm(graph graphOrigin) {
     int iterations = 0;
     int Condition = 1;
@@ -594,19 +650,69 @@ void KernighanLinAlgorithm(graph graphOrigin) {
         }
 
         updateGainStatus(Pair, &Condition, graphOrigin);
-        if (Condition == 0) {
-            freePair(Pair);
-            break;
-        }
+        // if (Condition == 0) {
+        //     freePair(Pair);
+        //     break;
+        // }
 
         pair BestPair = findBestPair(Pair);
+
         printSwap(BestPair, graphOrigin);
+        printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
+        printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+
         swapAB(BestPair, graphOrigin);
 
+        printf("<========ZAMIANA=========>\n");
+        printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
+        printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+
         freePair(Pair);
-        printf("Iteration: %d\n", iterations);
+
+        //printf("Iteration: %d\n", iterations);
         iterations++;
+    }
+    calcDiff(graphOrigin);
+}
+
+
+/*Obliczanie difference dla wierzchołka*/
+void calcDiff(graph graphOrigin) {
+    graph temp = graphOrigin;
+    while(temp != NULL) {
+        temp->currentNode->difference = temp->currentNode->externalSize - temp->currentNode->internalSize;
+        temp = temp->next;
     }
 }
 
-//W pair stworzyć wskaźnik do graph, żeby szybciekj szukać wierzchołków
+
+/*wyświetlanie wyników*/
+void displayResults(graph graphOrigin) {
+    graph temp = graphOrigin;
+    int positive = 0;
+    int negative = 0;
+
+    while(temp != NULL) {
+        if (temp->currentNode->internalSize >= temp->currentNode->externalSize - 1) {
+            positive++;
+        }else {
+            negative++;
+        }
+        temp = temp->next;
+    }
+
+    printf("Pozytywny rezultat: %d \n", positive);
+    printf("Negatywny rezultat: %d \n", negative);
+}
+
+
+/*Wyświetlanie węzłów, które są zablokowane*/
+void printLocked(graph graphOrigin) {
+    graph temp = graphOrigin;
+    while(temp != NULL) {
+        if(temp->currentNode->locked == 1) {
+            printNode(temp);
+        }
+        temp = temp->next;
+    }
+}

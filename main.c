@@ -167,7 +167,9 @@ int main(int argc, char *argv[]) {
     graph Graph = createGraph(inputFile);
     createNodeGroups(Graph,margin,partition);
     subarray(Graph);
+    initializeNodeLookupTable(Graph);
     KernighanLinAlgorithm(Graph);
+    freeNodeLookupTable();
     printGraph(Graph);
     saveToTxt(Graph,inputFile,outputFile,partition);
     freeGraph(Graph);

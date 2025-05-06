@@ -23,6 +23,11 @@ typedef struct graph {
     struct graph *next; // next node
 }*graph;
 
+typedef struct checkedNodes {
+    int* adjacentNodes;
+}*checkedNodes;
+
+
 node createNode(int arraySize);
 node findNode(graph Graph, int nodeIndex);
 int numElements(const char *fileName, int lineNumber);
@@ -33,5 +38,6 @@ graph findNodeID(graph Miautoni, int nodeID);
 graph createGraph(const char *fileName);
 void printGraph(graph Graph);
 void freeGraph(graph Graph);
+void checkInputFile(char *fileName);
 
 #endif
