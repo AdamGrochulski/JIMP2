@@ -8,6 +8,7 @@
 #include "graph.h"
 #include "Dijkstra.h"
 #include "KernighanLin.h"
+#include "output.h"
 
 //Funkcja do zmienia koloru tekstu (zrobiona w celach estetycznych)
 void Colors(int type) {
@@ -56,7 +57,6 @@ int main(int argc, char *argv[]) {
 
     //Zmienne używane przez getopt
     int opt;
-    int option_index = 0;
 
     //Zmienne związane z plikiem wyjściowym i wejściowym
     char *inputFile = NULL;
@@ -167,9 +167,9 @@ int main(int argc, char *argv[]) {
     graph Graph = createGraph(inputFile);
     createNodeGroups(Graph,margin,partition);
     subarray(Graph);
-    //printGraph(Graph);
     KernighanLinAlgorithm(Graph);
     printGraph(Graph);
+    saveToTxt(Graph,inputFile,outputFile,partition);
     freeGraph(Graph);
     return EXIT_SUCCESS;
 }
