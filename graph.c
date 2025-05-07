@@ -254,6 +254,7 @@ void notAlone(graph Graph, int partition){
     graph takenGraph = Graph;
     int takenNodeIndex = 0;
     int aloneNodeIndex = 0;
+    int takenNodeGroupIndex = 0;
     int* groupSizes = malloc(sizeof(int) * partition);
     for(int i = 0; i < partition; i++){
         groupSizes[i] = 0;
@@ -268,10 +269,12 @@ void notAlone(graph Graph, int partition){
 
     while(takenGraph != NULL) {
         takenNodeIndex=takenGraph->nodeID;
+        takenNodeGroupIndex = takenGraph->currentNode->group - 1;
         if(takenGraph->currentNode->internalSize == 0){
             node tempNode = findNode(Graph,takenGraph->currentNode->allEdges[0]);
             int minGroupSize = groupSizes[tempNode->group - 1];
             int minIndex = takenGraph->currentNode->allEdges[0];
+            int minGroupIndex = tempNode->group - 1;
             for(int j = 1; j < takenGraph->currentNode->arraySize; j++){
                 int considerIndex = takenGraph->currentNode->allEdges[j];
                 node considerNode = findNode(Graph,considerIndex);
@@ -279,9 +282,12 @@ void notAlone(graph Graph, int partition){
                 if(groupSizes[considerNodeGroup - 1] < minGroupSize){
                     minGroupSize = groupSizes[considerNodeGroup - 1];
                     minIndex = considerIndex;
+                    minGroupIndex = considerNode->group - 1;
                 }
             }
             aloneNodeIndex = minIndex;
+            groupSizes[minGroupIndex] = groupSizes[minGroupIndex] - 1;
+            groupSizes[takenNodeGroupIndex] = groupSizes[takenNodeGroupIndex] + 1;
             addToInternalEdges(Graph, takenNodeIndex, aloneNodeIndex);
         }
         takenGraph = takenGraph->next;
