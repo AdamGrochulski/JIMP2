@@ -1,18 +1,11 @@
 #include "output.h"
 
 void saveToTxt(graph Graph, const char *inputFile, const char *outputFile, int partition){
-    FILE *input = fopen(inputFile, "r");
-    if (input==NULL) {
-        perror("Cannot open file");
-        exit(303);
-    }
     FILE *output = fopen(outputFile, "w");
     if (output==NULL) {
         perror("Cannot open file");
         exit(303);
     }
-
-    fclose(input);
     
     const int n2 = numElements(inputFile, 2);
     const int n3 = numElements(inputFile, 3);
@@ -73,8 +66,76 @@ void saveToTxt(graph Graph, const char *inputFile, const char *outputFile, int p
     fclose(output);
 }
 
-void saveToBin(graph Graph, const char *inputFile, const char *outputFile){
-    
+void saveToBin(graph Graph, const char *inputFile, const char *outputFile, int partition){
+    FILE *output = fopen(outputFile, "wb");
+    if (output==NULL) {
+        perror("Cannot open file");
+        exit(303);
+    }
+
+    const int n2 = numElements(inputFile, 2);
+    const int n3 = numElements(inputFile, 3);
+    int *line1 = readLine(inputFile, 1, 1);
+    int *line2 = readLine(inputFile, 2, n2);
+    int *line3 = readLine(inputFile, 3, n3);
+
+    writeArrayAsShorts(output, line1, 1);
+    writeArrayAsShorts(output, line2, n2);
+    writeArrayAsShorts(output, line3, n3);
+
+    free(line1);
+    free(line2);
+    free(line3);
+
+    graph takenGraph = Graph;
+    int** lineSizes = malloc( partition * sizeof(int *));
+    lineSizes = findLineSizes(Graph, lineSizes, partition);
+    //Array zawierający arraye wszystkich grup, w których są zawarte linie do zapisania!
+    int*** lines = malloc( partition * sizeof(int **));
+
+    //Pomocnicze listy zawierające liczniki
+    int* firstLineCounter = malloc(partition * sizeof(int));
+    int* secondLineCounter = malloc(partition * sizeof(int));
+
+    for(int i = 0; i < partition; i++){
+        lines[i]=malloc(2 * sizeof(int **));
+        lines[i][0]=malloc(lineSizes[i][0] * sizeof(int *));
+        lines[i][1]=malloc(lineSizes[i][1] * sizeof(int *));
+        firstLineCounter[i] = 0;
+        secondLineCounter[i] = 0;
+    }
+
+    while(takenGraph != NULL) {
+        int currentNodeIndex = takenGraph->nodeID;
+        int currentGroup = takenGraph->currentNode->group;
+        lines[currentGroup-1][0][firstLineCounter[currentGroup-1]] = currentNodeIndex;
+        lines[currentGroup-1][1][secondLineCounter[currentGroup-1]] = takenGraph->currentNode->internalSize + 1;
+        firstLineCounter[currentGroup-1] = firstLineCounter[currentGroup-1] + 1;
+        secondLineCounter[currentGroup-1] = secondLineCounter[currentGroup-1] + 1;
+        for(int internalIndex = 0; internalIndex < takenGraph->currentNode->internalSize; internalIndex++){
+            if(takenGraph->currentNode->internalEdges[internalIndex] > currentNodeIndex){
+                lines[currentGroup-1][0][firstLineCounter[currentGroup-1]] = takenGraph->currentNode->internalEdges[internalIndex];
+                firstLineCounter[currentGroup-1] = firstLineCounter[currentGroup-1] + 1;
+            }
+        }
+        takenGraph = takenGraph->next;
+    }
+
+    free(firstLineCounter);
+    free(secondLineCounter);
+
+    for(int groupIndex = 0; groupIndex < partition; groupIndex++){
+        writeArrayAsShorts(output, lines[groupIndex][0], lineSizes[groupIndex][0]);
+        writeArrayAsShorts(output, lines[groupIndex][1], lineSizes[groupIndex][1]);
+        free(lines[groupIndex][0]);
+        free(lines[groupIndex][1]);
+        free(lines[groupIndex]);
+        free(lineSizes[groupIndex]);
+    }
+    free(lineSizes);
+    free(lines);
+
+    fclose(output);
 }
 
 int searchMaxColumn(int* line2, int n2){
@@ -85,4 +146,36 @@ int searchMaxColumn(int* line2, int n2){
         }
     }
     return max;
+}
+
+void writeArrayAsShorts(FILE *file, int *array, int arraySize){
+    // unsigned short seperator = -1;
+    fwrite(&arraySize, sizeof(unsigned short), 1, file);
+    for(int i = 0; i < arraySize; i++){
+        unsigned short temp = (short)array[i];
+        fwrite(&temp, sizeof(unsigned short), 1, file);
+    }
+    
+}
+
+int** findLineSizes(graph Graph, int** lineSizes, int partition){
+    graph takenGraph = Graph;
+    for(int i = 0; i < partition; i++){
+        lineSizes[i] = malloc(2 * sizeof(int));
+        lineSizes[i][0] = 0;
+        lineSizes[i][1] = 0;
+    }
+    while(takenGraph != NULL) {
+        int currentNodeIndex = takenGraph->nodeID;
+        int currentGroup = takenGraph->currentNode->group;
+        lineSizes[currentGroup-1][0] = lineSizes[currentGroup-1][0] + 1;
+        for(int internalIndex = 0; internalIndex < takenGraph->currentNode->internalSize; internalIndex++){
+            if(takenGraph->currentNode->internalEdges[internalIndex] > currentNodeIndex){
+                lineSizes[currentGroup-1][0] = lineSizes[currentGroup-1][0] + 1;
+            }
+        }
+        lineSizes[currentGroup-1][1] = lineSizes[currentGroup-1][1] + 1;
+        takenGraph = takenGraph->next;
+    }
+    return lineSizes;
 }

@@ -62,6 +62,9 @@ int main(int argc, char *argv[]) {
     char *inputFile = NULL;
     char *outputFile = NULL;
 
+    //Zmienne do obsługi eksportu efektu dzielenia grafu do pliku tekstowego/binarnego
+    int saveOption = -1; // Wartość 0 - plik tekstowy, Wartość 1 - plik binarny, Wartość -1 - nie podano flagi
+
     //Zmienne służące do dzielenia grafu
     int margin = -1; // Liczba -1 to stan nieprzetworzenia zmiennej
     int partition = -1;
@@ -113,8 +116,6 @@ int main(int argc, char *argv[]) {
                 outputFile = optarg;
                 break;
 
-                break;
-
             case 'm':
                 margin = strtol(optarg, NULL, 10);
                 if(margin < 0 || margin > 100){
@@ -145,10 +146,10 @@ int main(int argc, char *argv[]) {
                 //Tutaj będzie tryb deweloperski ( będzie wyświetlał przebieg działania programu )
                 break;
             case 't':
-                //Tutaj będzie tryb zapisywania pliku w formacie tekstowym ( domyślnie to by był format csrrg )
+                saveOption = 0;
                 break;
             case 'b':
-                //Tutaj będzie tryb zapisywania pliku w binarnym ( domyślnie to by był format csrrg )
+                saveOption = 1;
                 break;
 
             case '?':
@@ -173,7 +174,18 @@ int main(int argc, char *argv[]) {
     notAlone(Graph,partition);
     printGraph(Graph);
     marginChecker(Graph,partition,margin);
-    saveToTxt(Graph,inputFile,outputFile,partition);
+
+    if(saveOption == 0){
+        saveToTxt(Graph,inputFile,outputFile,partition);
+    }
+    else if (saveOption == 1){
+        saveToBin(Graph,inputFile,outputFile,partition);
+    }
+    else{
+        return EXIT_FAILURE;
+    }
+
+    
     freeGraph(Graph);
     return EXIT_SUCCESS;
 }
