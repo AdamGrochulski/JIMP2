@@ -334,7 +334,7 @@ void addToInternalEdges(graph Graph, int takenNodeIndex, int aloneNodeIndex){
     free(aloneClone);
 }
 
-void marginChecker(graph Graph, int partition, int margin){
+int marginChecker(graph Graph, int partition, int margin){
     graph takenGraph = Graph;
     int* groupSizes = malloc(sizeof(int) * partition);
     for(int i = 0; i < partition; i++){
@@ -351,7 +351,6 @@ void marginChecker(graph Graph, int partition, int margin){
     double min = groupSizes[0];
 
     for(int i = 0; i < partition; i++){
-        printf("Grupa %d: %d\n",i+1,groupSizes[i]);
         if(groupSizes[i]>max){
             max = groupSizes[i];
         }
@@ -359,13 +358,12 @@ void marginChecker(graph Graph, int partition, int margin){
             min = groupSizes[i];
         }
     }
-    printf("Max %lf\n",max);
-    printf("Min %lf\n",min);
-    double currentMargain = ( max / min ) - 1;
 
-    printf("CurrentMargain %lf\n",currentMargain);
+    double currentMargain = (( max / min ) - 1)*100;
+    double ceilMargain = ceil(currentMargain);
 
     free(groupSizes);
+    return (int)ceilMargain;
 }
 
 void freeGraph(graph Graph) {

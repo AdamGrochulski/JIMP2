@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <string.h>
 #include <stdbool.h>
 
 //Biblioteki programu sliceIt
@@ -61,9 +62,13 @@ int main(int argc, char *argv[]) {
     //Zmienne związane z plikiem wyjściowym i wejściowym
     char *inputFile = NULL;
     char *outputFile = NULL;
+    const char* inputFolder = "input/";
+    const char* outputFolder = "output/";
+    size_t pathInput;
+    size_t pathOutput;
 
     //Zmienne do obsługi eksportu efektu dzielenia grafu do pliku tekstowego/binarnego
-    int saveOption = -1; // Wartość 0 - plik tekstowy, Wartość 1 - plik binarny, Wartość -1 - nie podano flagi
+    int saveOption = 0; // Wartość 0 - plik tekstowy, Wartość 1 - plik binarny
 
     //Zmienne służące do dzielenia grafu
     int margin = -1; // Liczba -1 to stan nieprzetworzenia zmiennej
@@ -104,16 +109,30 @@ int main(int argc, char *argv[]) {
                 return EXIT_SUCCESS;
             
             case 'i':
-                inputFile = optarg;
+                pathInput = strlen(inputFolder) + strlen(optarg) + 1;
+                inputFile = malloc(pathInput);
+
+                snprintf(inputFile, pathInput, "%s%s", inputFolder, optarg);
+
                 FILE *input = fopen(inputFile, "r");
                 if(input==NULL){
                     printf("Błąd wczytywania pliku wejściowego!\n");
                     return EXIT_FAILURE;
                 }
+                fclose(input);
                 break;
             
             case 'o':
-                outputFile = optarg;
+                pathOutput = strlen(outputFolder) + strlen(optarg) + 1;
+                outputFile = malloc(pathOutput);
+
+                snprintf(outputFile, pathOutput, "%s%s", outputFolder, optarg);
+
+                FILE *output = fopen(outputFile, "w");
+                if(output==NULL){
+                    printf("Błąd wczytywania pliku wejściowego!\n");
+                    return EXIT_FAILURE;
+                }
                 break;
 
             case 'm':
@@ -166,26 +185,33 @@ int main(int argc, char *argv[]) {
 
     //Przebieg działania programu sliceIt
     graph Graph = createGraph(inputFile);
-    createNodeGroups(Graph,margin,partition);
+
+    createNodeGroups(Graph,margin,partition); //Algorytm Dijkstry
+
     subarray(Graph);
     initializeNodeLookupTable(Graph);
-    KernighanLinAlgorithm(Graph);
+    KernighanLinAlgorithm(Graph); //Algorytm KernighanaLina
     freeNodeLookupTable();
-    notAlone(Graph,partition);
-    printGraph(Graph);
-    marginChecker(Graph,partition,margin);
 
+    notAlone(Graph,partition); //Funckja optymalizująca połączenia wierzchołków
+
+     //Sprawdzenie marginesu
+    int marginError = marginChecker(Graph,partition,margin);
+    if(marginError > margin && margin != 0){
+        printf("Margines podzielonych podgrafów jest większy od podanego!\n");
+        printf("Uruchom program używając flagi --mforce !\n");
+        return EXIT_FAILURE;
+    }
     if(saveOption == 0){
         saveToTxt(Graph,inputFile,outputFile,partition);
     }
     else if (saveOption == 1){
         saveToBin(Graph,inputFile,outputFile,partition);
     }
-    else{
-        return EXIT_FAILURE;
-    }
-
     
     freeGraph(Graph);
+    free(inputFile);
+    free(outputFile);
+
     return EXIT_SUCCESS;
 }
