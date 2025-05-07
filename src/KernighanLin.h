@@ -33,7 +33,7 @@ pair findBestPair(pair Pair);
 void printSwap(pair Pair, graph graphOrigin);
 void swapAB(pair Pair, graph graphOrign);
 void updateGainStatus(pair Pair, int *Condition, graph graphOrigin);
-void KernighanLinAlgorithm(graph graphOriginal);
+void KernighanLinAlgorithm(graph graphOriginal, int verbose);
 void calcDiff(graph graphOrigin);
 void displayResults(graph graphOrigin);
 void printLocked(graph graphOrigin);

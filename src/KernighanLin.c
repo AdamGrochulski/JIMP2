@@ -631,7 +631,7 @@ void printNode(graph curr) {
 
 
 /* Algorytm Kernighana-Lina*/
-void KernighanLinAlgorithm(graph graphOrigin) {
+void KernighanLinAlgorithm(graph graphOrigin, int verbose) {
     int iterations = 0;
     int Condition = 1;
 
@@ -650,26 +650,29 @@ void KernighanLinAlgorithm(graph graphOrigin) {
         }
 
         updateGainStatus(Pair, &Condition, graphOrigin);
-        // if (Condition == 0) {
-        //     freePair(Pair);
-        //     break;
-        // }
 
         pair BestPair = findBestPair(Pair);
-
-        printSwap(BestPair, graphOrigin);
-        printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
-        printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+        
+        if(verbose == 1){
+            printSwap(BestPair, graphOrigin);
+            printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
+            printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+        }
 
         swapAB(BestPair, graphOrigin);
 
-        printf("<========ZAMIANA=========>\n");
-        printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
-        printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+        if(verbose == 1){
+            printf("\n<========ZAMIANA=========>\n");
+            printNode(locateNode(graphOrigin, BestPair->nodeIndexA));
+            printNode(locateNode(graphOrigin, BestPair->nodeIndexB));
+        }
 
         freePair(Pair);
-
-        //printf("Iteration: %d\n", iterations);
+        
+        if(verbose == 1){
+            printf("Iteration: %d\n", iterations);
+        }
+        
         iterations++;
     }
     calcDiff(graphOrigin);
