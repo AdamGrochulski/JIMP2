@@ -43,5 +43,11 @@ void notAlone(graph Graph, int partition);
 void addToInternalEdges(graph Graph, int takenNodeIndex, int aloneNodeIndex);
 int marginChecker(graph Graph, int partition, int margin);
 void freeGraph(graph Graph);
+void checkFile(const char* fileName);
+void checkPositive(int arr[], int arrSize);
+void nonDecreasingOrder(int arr[], int arrSize, int lineNumber);
+void checkDuplicates(int *arr4, int arr4Size, int *arr5, int numOfGroups);
+void swap(int* xp, int* yp);
+void bubbleSort(int arr[], int n);
 
 #endif

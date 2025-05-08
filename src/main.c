@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
     //Zmienne służące do dzielenia grafu
     int margin = -1; // Liczba -1 to stan nieprzetworzenia zmiennej
     int partition = -1;
+    int verbose = -1;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -162,7 +163,7 @@ int main(int argc, char *argv[]) {
                 break;
 
             case 'v':
-                //Tutaj będzie tryb deweloperski ( będzie wyświetlał przebieg działania programu )
+                verbose = 1;
                 break;
             case 't':
                 saveOption = 0;
@@ -183,6 +184,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    checkFile(inputFile);
+
     //Przebieg działania programu sliceIt
     graph Graph = createGraph(inputFile);
 
@@ -190,8 +193,12 @@ int main(int argc, char *argv[]) {
 
     subarray(Graph);
     initializeNodeLookupTable(Graph);
-    KernighanLinAlgorithm(Graph); //Algorytm KernighanaLina
+    KernighanLinAlgorithm(Graph, verbose); //Algorytm KernighanaLina
     freeNodeLookupTable();
+
+    if(verbose == 1){
+        printGraph(Graph);
+    }
 
     notAlone(Graph,partition); //Funckja optymalizująca połączenia wierzchołków
 
